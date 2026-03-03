@@ -13,7 +13,11 @@ import pandas as pd
 from dotenv import load_dotenv
 
 # 載入環境變數
-load_dotenv()
+try:
+    load_dotenv()
+except UnicodeDecodeError:
+    # 如果 .env 檔案編碼有問題，手動設定 API 金鑰
+    os.environ['CWA_API_KEY'] = 'CWA-455B0B17-BBF9-4388-B110-7BC2D1112688'
 
 class CWAWeatherAPI:
     def __init__(self):
