@@ -12,6 +12,43 @@ import seaborn as sns
 from geopy.distance import geodesic
 import os
 from datetime import datetime
+import matplotlib.font_manager as fm
+
+def setup_chinese_font():
+    """設置中文字體"""
+    # 嘗試不同的中文字體
+    chinese_fonts = [
+        'Microsoft JhengHei',  # Windows 微軟正黑體
+        'Microsoft YaHei',     # Windows 微軟雅黑
+        'SimHei',             # Windows 黑體
+        'SimSun',             # Windows 宋體
+        'PingFang SC',        # macOS 蘋方
+        'Hiragino Sans GB',   # macOS 冬青黑體
+        'WenQuanYi Zen Hei', # Linux 文泉驛正黑
+        'Arial Unicode MS',    # 跨平台
+        'DejaVu Sans'         # 備用
+    ]
+    
+    # 檢查系統中可用的字體
+    available_fonts = [f.name for f in fm.fontManager.ttflist]
+    
+    # 找到第一個可用的中文字體
+    for font in chinese_fonts:
+        if font in available_fonts:
+            # 強制設置字體參數
+            plt.rcParams.update({
+                'font.family': ['sans-serif'],
+                'font.sans-serif': [font] + [f for f in plt.rcParams.get('font.sans-serif', []) if f != font],
+                'axes.unicode_minus': False
+            })
+            
+            print(f"使用字體: {font}")
+            print(f"字體設置: {plt.rcParams['font.sans-serif'][:3]}")
+            return font
+    
+    # 如果沒有找到中文字體，使用預設字體並警告
+    print("警告: 未找到合適的中文字體，圖表中文字可能無法正確顯示")
+    return None
 
 class CoordinateComparison:
     def __init__(self):
@@ -149,8 +186,11 @@ class CoordinateComparison:
             print("沒有資料可分析")
             return
         
+        # 設置中文字體
+        setup_chinese_font()
+        
         # 設置圖表樣式
-        plt.style.use('seaborn-v0_8')
+        plt.style.use('default')
         fig, axes = plt.subplots(2, 2, figsize=(15, 12))
         fig.suptitle('氣象站坐標系統距離分析', fontsize=16, fontweight='bold')
         
@@ -196,7 +236,7 @@ class CoordinateComparison:
         """
         
         axes[1, 1].text(0.1, 0.9, stats_text, transform=axes[1, 1].transAxes, 
-                       fontsize=10, verticalalignment='top', fontfamily='monospace')
+                       fontsize=10, verticalalignment='top')
         axes[1, 1].axis('off')
         
         plt.tight_layout()
