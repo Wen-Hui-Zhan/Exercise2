@@ -41,7 +41,7 @@ class CWAWeatherAPI:
             return None
     
     def parse_temperature_data(self, data):
-        """解析氣溫數據"""
+        """解析氣溫數據，支援兩個坐標系統"""
         if not data or 'records' not in data:
             return None
         
@@ -50,11 +50,31 @@ class CWAWeatherAPI:
         
         for record in records:
             try:
+                # 獲取兩組坐標
+                coordinates = record['GeoInfo']['Coordinates']
+                
+                # 第一組坐標 (索引 0)
+                coord1_lat = float(coordinates[0]['StationLatitude'])
+                coord1_lon = float(coordinates[0]['StationLongitude'])
+                coord1_name = coordinates[0].get('CoordinateName', 'CoordinateSystem1')
+                
+                # 第二組坐標 (索引 1) - 原本使用的 WGS84
+                coord2_lat = float(coordinates[1]['StationLatitude'])
+                coord2_lon = float(coordinates[1]['StationLongitude'])
+                coord2_name = coordinates[1].get('CoordinateName', 'CoordinateSystem2')
+                
                 station_info = {
                     'station_id': record['StationId'],
                     'station_name': record['StationName'],
-                    'latitude': float(record['GeoInfo']['Coordinates'][1]['StationLatitude']),  # 使用 WGS84 座標
-                    'longitude': float(record['GeoInfo']['Coordinates'][1]['StationLongitude']),
+                    # 第一組坐標
+                    'coord1_latitude': coord1_lat,
+                    'coord1_longitude': coord1_lon,
+                    'coord1_name': coord1_name,
+                    # 第二組坐標
+                    'coord2_latitude': coord2_lat,
+                    'coord2_longitude': coord2_lon,
+                    'coord2_name': coord2_name,
+                    # 氣象資料
                     'temperature': float(record['WeatherElement']['AirTemperature']) if record['WeatherElement']['AirTemperature'] else None,
                     'humidity': float(record['WeatherElement']['RelativeHumidity']) if record['WeatherElement']['RelativeHumidity'] else None,
                     'observation_time': record['ObsTime']['DateTime'],
@@ -65,7 +85,7 @@ class CWAWeatherAPI:
                     'air_pressure': float(record['WeatherElement']['AirPressure']) if record['WeatherElement']['AirPressure'] else None
                 }
                 stations.append(station_info)
-            except (KeyError, ValueError, TypeError) as e:
+            except (KeyError, ValueError, TypeError, IndexError) as e:
                 print(f"解析站點資料時發生錯誤 {record.get('StationId', 'Unknown')}: {e}")
                 continue
         
@@ -150,7 +170,8 @@ def main():
                     print(f"   天氣: {station['weather']}")
                     print(f"   風速: {station['wind_speed']} m/s, 風向: {station['wind_direction']}°")
                     print(f"   氣壓: {station['air_pressure']} hPa")
-                    print(f"   座標: ({station['latitude']}, {station['longitude']})")
+                    print(f"   坐標系統1 ({station['coord1_name']}): ({station['coord1_latitude']}, {station['coord1_longitude']})")
+                    print(f"   坐標系統2 ({station['coord2_name']}): ({station['coord2_latitude']}, {station['coord2_longitude']})")
                     print(f"   觀測時間: {station['observation_time']}")
                     print()
                 
